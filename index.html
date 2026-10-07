@@ -144,6 +144,8 @@
     function App() {
       const [perfilLogado, setPerfilLogado] = React.useState('nenhum');
       const [abaAtiva, setAbaAtiva] = React.useState('visao');
+      // Estado para controlar se o menu lateral está aberto no celular
+      const [menuMobileAberto, setMenuMobileAberto] = React.useState(false);
 
       // Mapeamento de Chaves Mestras por E-mail de Síndico
       const [chavesMestrasPorEmail, setChavesMestrasPorEmail] = React.useState(() => {
@@ -2052,34 +2054,45 @@
       return (
         <div className="flex h-screen w-full bg-[#F4F7FC] overflow-hidden relative">
           
-          {/* BARRA LATERAL COM O NOME DO CONDOMÍNIO + NOME DO MORADOR E APTO LOGO ABAIXO */}
-          <aside className="w-64 bg-[#0B192C] flex flex-col justify-between text-slate-300 select-none border-r border-slate-800">
+          {/* BARRA LATERAL (RESPONSIVA PARA APP) */}
+          <aside className={`absolute md:relative z-40 inset-y-0 left-0 w-64 bg-[#0B192C] flex flex-col justify-between text-slate-300 select-none border-r border-slate-800 transition-transform duration-300 ${
+            menuMobileAberto ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
+          }`}>
             <div>
-              <div className="p-4 flex items-center gap-3 border-b border-slate-800/80">
-                <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold shrink-0">
-                  🏢
+              <div className="p-4 flex items-center justify-between border-b border-slate-800/80">
+                <div className="flex items-center gap-3 overflow-hidden">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold shrink-0">
+                    🏢
+                  </div>
+                  <div className="overflow-hidden space-y-0.5">
+                    <h1 className="text-white font-bold text-xs truncate">
+                      {nomeCondominioExibido || 'Painel de Gestão'}
+                    </h1>
+                    
+                    {perfilLogado === 'condomino' ? (
+                      <div className="text-[11px] text-amber-400 font-extrabold truncate flex items-center gap-1">
+                        <span>👤 {dadosMoradorLogado.nome.split(' ')[0]}</span>
+                        <span className="text-slate-400 font-normal">·</span>
+                        <span className="text-emerald-400">{dadosMoradorLogado.apto}</span>
+                      </div>
+                    ) : (
+                      <p className="text-[11px] text-amber-400 font-semibold capitalize truncate">
+                        👔 {emailSindicoLogado || 'Síndico'}
+                      </p>
+                    )}
+                  </div>
                 </div>
-                <div className="overflow-hidden space-y-0.5">
-                  <h1 className="text-white font-bold text-xs truncate">
-                    {nomeCondominioExibido || 'Painel de Gestão'}
-                  </h1>
-                  
-                  {/* NOME DO MORADOR E APTO LOGO ABAIXO DO CONDOMÍNIO */}
-                  {perfilLogado === 'condomino' ? (
-                    <div className="text-[11px] text-amber-400 font-extrabold truncate flex items-center gap-1">
-                      <span>👤 {dadosMoradorLogado.nome.split(' ')[0]}</span>
-                      <span className="text-slate-400 font-normal">·</span>
-                      <span className="text-emerald-400">{dadosMoradorLogado.apto}</span>
-                    </div>
-                  ) : (
-                    <p className="text-[11px] text-amber-400 font-semibold capitalize truncate">
-                      👔 {emailSindicoLogado || 'Síndico'}
-                    </p>
-                  )}
-                </div>
+
+                {/* BOTÃO PARA FECHAR MENU NO CELULAR */}
+                <button 
+                  onClick={() => setMenuMobileAberto(false)}
+                  className="md:hidden text-slate-400 hover:text-white p-1"
+                >
+                  ✕
+                </button>
               </div>
 
-              <nav className="p-3 space-y-1">
+              <nav className="p-3 space-y-1 overflow-y-auto max-h-[calc(100vh-140px)]">
                 {getMenuItems().map((item) => {
                   const ativo = abaAtiva === item.id;
                   return (
@@ -2091,6 +2104,7 @@
                         } else {
                           setAbaAtiva(item.id);
                         }
+                        setMenuMobileAberto(false); // Fecha o menu no celular ao clicar em uma aba
                       }}
                       className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition cursor-pointer ${
                         ativo 
@@ -2122,11 +2136,30 @@
           </aside>
 
           {/* CONTEÚDO PRINCIPAL DINÂMICO */}
-          <main className="flex-1 flex flex-col overflow-y-auto">
+          <main className="flex-1 flex flex-col overflow-y-auto w-full">
             
+            {/* CABEÇALHO PARA CELULAR COM BOTÃO DO MENU HAMBÚRGUER (BOTÃO AMARELO À ESQUERDA) */}
+            <div className="md:hidden bg-[#0B192C] text-white p-4 flex items-center justify-between border-b border-slate-800">
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => setMenuMobileAberto(true)}
+                  className="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold p-2.5 rounded-xl text-lg shadow-md cursor-pointer flex items-center justify-center"
+                >
+                  ☰
+                </button>
+                <div>
+                  <h3 className="font-bold text-xs truncate max-w-[180px]">{nomeCondominioExibido || 'Condô Web'}</h3>
+                  <p className="text-[10px] text-amber-400 capitalize">{perfilLogado === 'sindico' ? 'Painel Síndico' : `Morador · ${dadosMoradorLogado.apto}`}</p>
+                </div>
+              </div>
+              <span className="text-xs bg-amber-500/20 text-amber-400 px-2.5 py-1 rounded-lg font-bold border border-amber-500/30">
+                App
+              </span>
+            </div>
+
             {/* ABA: VISÃO GERAL */}
             {abaAtiva === 'visao' && (
-              <div className="p-8 space-y-6">
+              <div className="p-4 md:p-8 space-y-6">
                 <div>
                   <h2 className="text-2xl font-black text-slate-900 tracking-tight">Visão geral</h2>
                   <p className="text-sm text-slate-500 mt-0.5">Resumo das principais informações do condomínio e da sua unidade.</p>
@@ -2351,7 +2384,7 @@
 
             {/* ABA: VENDER / ALUGAR APTO (CORRETOR) */}
             {abaAtiva === 'vender_apto' && (
-              <div className="p-8 space-y-6">
+              <div className="p-4 md:p-8 space-y-6">
                 <div>
                   <h2 className="text-2xl font-black text-slate-900 tracking-tight">Vender / Alugar Imóvel</h2>
                   <p className="text-sm text-slate-500 mt-0.5">Parceria com o Especialista Imobiliário para venda ou locação do seu apartamento com atendimento exclusivo.</p>
@@ -2380,7 +2413,7 @@
 
             {/* ABA: AGENDAMENTO DE MUDANÇAS */}
             {abaAtiva === 'mudancas' && (
-              <div className="p-8 space-y-6">
+              <div className="p-4 md:p-8 space-y-6">
                 <div>
                   <h2 className="text-2xl font-black text-slate-900 tracking-tight">Agendamento de Mudanças</h2>
                   <p className="text-sm text-slate-500 mt-0.5">
@@ -2530,7 +2563,7 @@
 
             {/* ABA: ACHADOS E PERDIDOS */}
             {abaAtiva === 'achados' && (
-              <div className="p-8 space-y-6">
+              <div className="p-4 md:p-8 space-y-6">
                 <div>
                   <h2 className="text-2xl font-black text-slate-900 tracking-tight">Achados e Perdidos</h2>
                   <p className="text-sm text-slate-500 mt-0.5">
@@ -2644,7 +2677,7 @@
 
             {/* ABA: CADASTRO DE ESPAÇOS */}
             {abaAtiva === 'cadastrar_espacos' && perfilLogado === 'sindico' && (
-              <div className="p-8 space-y-6">
+              <div className="p-4 md:p-8 space-y-6">
                 <div>
                   <h2 className="text-2xl font-black text-slate-900 tracking-tight">Cadastrar e Gerenciar Espaços</h2>
                   <p className="text-sm text-slate-500 mt-0.5">Cadastre os espaços e defina os valores. Digite números (ex: 50 vira R$ 50,00) ou "Gratuito".</p>
@@ -2744,7 +2777,7 @@
 
             {/* ABA: UNIDADES & MORADORES */}
             {abaAtiva === 'unidades' && perfilLogado === 'sindico' && (
-              <div className="p-8 space-y-6">
+              <div className="p-4 md:p-8 space-y-6">
                 <div>
                   <h2 className="text-2xl font-black text-slate-900 tracking-tight">Unidades & Moradores</h2>
                   <p className="text-sm text-slate-500 mt-0.5">Cadastre novos moradores e gerencie os registros das unidades do condomínio.</p>
@@ -2870,8 +2903,8 @@
 
             {/* ABA: FINANCEIRO */}
             {abaAtiva === 'financeiro' && (
-              <div className="p-8 space-y-6">
-                <header className="flex items-center justify-between pb-4 border-b border-slate-200">
+              <div className="p-4 md:p-8 space-y-6">
+                <header className="flex flex-col md:flex-row items-start md:items-center justify-between pb-4 border-b border-slate-200 gap-3">
                   <div>
                     <h2 className="text-2xl font-black text-slate-900 tracking-tight">
                       {perfilLogado === 'sindico' ? 'Gestão Financeira & Controle de Datas' : 'Financeiro, Taxas e Histórico'}
@@ -2984,7 +3017,7 @@
 
             {/* ABA: RESERVAS & ESPAÇOS */}
             {abaAtiva === 'reservas' && (
-              <div className="p-8 space-y-6">
+              <div className="p-4 md:p-8 space-y-6">
                 <div>
                   <h2 className="text-2xl font-black text-slate-900 tracking-tight">Reservas e espaços</h2>
                   <p className="text-sm text-slate-500 mt-0.5">
@@ -3222,7 +3255,7 @@
 
             {/* ABA: MURAL DE AVISOS */}
             {abaAtiva === 'mural' && (
-              <div className="p-8 space-y-6">
+              <div className="p-4 md:p-8 space-y-6">
                 <div>
                   <h2 className="text-2xl font-black text-slate-900 tracking-tight">Mural de avisos</h2>
                   <p className="text-sm text-slate-500 mt-0.5">Comunicados oficiais e avisos importantes da administração do condomínio.</p>
@@ -3305,7 +3338,7 @@
 
             {/* ABA: ASSEMBLEIA VIRTUAL */}
             {abaAtiva === 'assembleia' && (
-              <div className="p-8 space-y-6">
+              <div className="p-4 md:p-8 space-y-6">
                 <div>
                   <h2 className="text-2xl font-black text-slate-900 tracking-tight">Assembleia Virtual & Votações</h2>
                   <p className="text-sm text-slate-500 mt-0.5">Participe das deliberações e votações ativas do condomínio.</p>
@@ -3405,7 +3438,7 @@
 
             {/* ABA: CONTROLE DE ENCOMENDAS */}
             {abaAtiva === 'encomendas' && (
-              <div className="p-8 space-y-6">
+              <div className="p-4 md:p-8 space-y-6">
                 <div>
                   <h2 className="text-2xl font-black text-slate-900 tracking-tight">Controle de Encomendas na Portaria</h2>
                   <p className="text-sm text-slate-500 mt-0.5">
@@ -3502,7 +3535,7 @@
 
             {/* ABA: VEÍCULOS & VAGAS */}
             {abaAtiva === 'veiculos' && (
-              <div className="p-8 space-y-6">
+              <div className="p-4 md:p-8 space-y-6">
                 <div>
                   <h2 className="text-2xl font-black text-slate-900 tracking-tight">Veículos & Vagas de Estacionamento</h2>
                   <p className="text-sm text-slate-500 mt-0.5">
@@ -3716,710 +3749,4 @@
                                 <span className="bg-emerald-100 text-emerald-800 font-bold text-[10px] px-2.5 py-0.5 rounded-full">Disponível para Aluguel</span>
                               </div>
                               <p className="text-xs text-slate-600">
-                                Anunciado por: <strong>{vagaDisp.morador} (Apto {vagaDisp.apto})</strong> · Valor: <strong className="text-emerald-700">{vagaDisp.precoLocacaoVaga || 'A combinar'}</strong>
-                              </p>
-                              <p className="text-xs text-slate-500">Contato WhatsApp: <strong>{vagaDisp.contatoVaga}</strong></p>
-                            </div>
-
-                            <button 
-                              onClick={() => abrirModalInformativoChat(vagaDisp)}
-                              className="px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer shadow-2xs flex items-center gap-1.5 shrink-0"
-                            >
-                              💬 Conversar com o Vizinho via Chat
-                            </button>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                <div className="space-y-4 max-w-3xl pt-2">
-                  <h3 className="font-bold text-slate-900 text-base">
-                    {perfilLogado === 'sindico' ? 'Todos os Veículos e Vagas Registrados no Condomínio' : `Meus Veículos & Situação da Vaga (${dadosMoradorLogado.apto})`}
-                  </h3>
-                  <div className="space-y-3">
-                    {veiculosVagasExibidos.length === 0 ? (
-                      <p className="text-xs text-slate-500 bg-white p-6 rounded-2xl border border-slate-200">Nenhum veículo ou vaga cadastrada no momento.</p>
-                    ) : (
-                      veiculosVagasExibidos.map(item => (
-                        <div key={item.id} className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm space-y-3">
-                          <div className="flex justify-between items-start gap-4">
-                            <div>
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <h4 className="text-sm font-bold text-slate-900">Apto {item.apto} — {item.morador}</h4>
-                                {item.vagaExtra && <span className="bg-amber-100 text-amber-900 font-bold text-[10px] px-2 py-0.5 rounded-md">Vaga Extra</span>}
-                                {item.semGaragem && <span className="bg-rose-100 text-rose-900 font-bold text-[10px] px-2 py-0.5 rounded-md">Sem Garagem</span>}
-                                {item.disponivelLocacaoMorador && <span className="bg-emerald-100 text-emerald-900 font-bold text-[10px] px-2 py-0.5 rounded-md">Disponível para Aluguel ({item.precoLocacaoVaga})</span>}
-                              </div>
-                              <p className="text-xs text-slate-600 mt-1">
-                                Veículo: <strong>{item.modelo}</strong> ({item.placa}) · Vaga: <strong>{item.vaga}</strong> ({item.tipoVaga})
-                              </p>
-                            </div>
-
-                            {perfilLogado === 'sindico' && (
-                              <button 
-                                onClick={() => removerVeiculoVagaSindico(item.id)}
-                                className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition cursor-pointer shrink-0"
-                              >
-                                🗑️ Excluir
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ABA: MERCADO DE VIZINHOS */}
-            {abaAtiva === 'mercado' && (
-              <div className="p-8 space-y-6">
-                <div>
-                  <h2 className="text-2xl font-black text-slate-900 tracking-tight">Mercado de Vizinhos & Classificados</h2>
-                  <p className="text-sm text-slate-500 mt-0.5">
-                    {perfilLogado === 'sindico' 
-                      ? 'Monitore e modere os anúncios publicados pelos moradores no classificado interno do condomínio.' 
-                      : 'Anuncie produtos, serviços ou itens à venda para os seus vizinhos e confira as ofertas disponíveis.'}
-                  </p>
-                </div>
-
-                {!chatAtivoNoMercado ? (
-                  <>
-                    <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-4 max-w-3xl">
-                      <h3 className="font-bold text-slate-900 text-base">Publicar Novo Anúncio no Classificado</h3>
-                      <form onSubmit={publicarAnuncioMorador} className="space-y-3">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                          <div className="md:col-span-2">
-                            <label className="block text-xs font-bold text-slate-600 mb-1">Título do Anúncio:</label>
-                            <input 
-                              type="text" 
-                              placeholder="Ex: Bicicleta Aro 29 seminova / Aulas de Inglês" 
-                              value={novoAnuncioTitulo}
-                              onChange={(e) => setNovoAnuncioTitulo(e.target.value)}
-                              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-medium text-slate-800"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-bold text-slate-600 mb-1">Categoria:</label>
-                            <select 
-                              value={novoAnuncioCat}
-                              onChange={(e) => setNovoAnuncioCat(e.target.value)}
-                              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-medium text-slate-800"
-                            >
-                              <option value="Produtos & Eletrônicos">Produtos & Eletrônicos</option>
-                              <option value="Serviços & Aulas">Serviços & Aulas</option>
-                              <option value="Esportes & Lazer">Esportes & Lazer</option>
-                              <option value="Móveis & Casa">Móveis & Casa</option>
-                            </select>
-                          </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          <div>
-                            <label className="block text-xs font-bold text-slate-600 mb-1">Preço / Valor (Ex: R$ 150,00 ou A combinar):</label>
-                            <input 
-                              type="text" 
-                              placeholder="Ex: R$ 150,00" 
-                              value={novoAnuncioPreco}
-                              onChange={(e) => setNovoAnuncioPreco(e.target.value)}
-                              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-medium text-slate-800"
-                            />
-                          </div>
-                          <div>
-                            <label className="block text-xs font-bold text-slate-600 mb-1">Telefone de Contato (WhatsApp):</label>
-                            <input 
-                              type="text" 
-                              placeholder="(21) 990214908" 
-                              value={novoAnuncioContato}
-                              onChange={(e) => setNovoAnuncioContato(e.target.value)}
-                              className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-medium text-slate-800"
-                            />
-                          </div>
-                        </div>
-
-                        <div>
-                          <label className="block text-xs font-bold text-slate-600 mb-1">Descrição Detalhada:</label>
-                          <textarea 
-                            rows="3"
-                            placeholder="Descreva o produto ou serviço oferecido..." 
-                            value={novoAnuncioDesc}
-                            onChange={(e) => setNovoAnuncioDesc(e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-medium text-slate-800"
-                          ></textarea>
-                        </div>
-
-                        <button 
-                          type="submit"
-                          className="w-full bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold p-3 rounded-xl transition cursor-pointer text-xs shadow-md"
-                        >
-                          🛍️ Publicar Anúncio no Mercado de Vizinhos
-                        </button>
-                      </form>
-                    </div>
-
-                    <div className="space-y-4 max-w-3xl">
-                      <h3 className="font-bold text-slate-900 text-base">Classificados Ativos no Condomínio</h3>
-                      <div className="grid grid-cols-1 gap-4">
-                        {mercadoAnuncios.length === 0 ? (
-                          <p className="text-xs text-slate-500 bg-white p-6 rounded-2xl border border-slate-200">Nenhum anúncio publicado no momento.</p>
-                        ) : (
-                          mercadoAnuncios.map(anuncio => (
-                            <div key={anuncio.id} className="bg-white p-6 rounded-2xl border border-slate-200/80 shadow-sm space-y-3 relative">
-                              <div className="flex justify-between items-start gap-4">
-                                <div>
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <h4 className="font-bold text-slate-900 text-base">{anuncio.titulo}</h4>
-                                    <span className="bg-blue-100 text-blue-900 font-bold text-[10px] px-2.5 py-0.5 rounded-full">{anuncio.categoria}</span>
-                                  </div>
-                                  <p className="text-xs text-slate-500 mt-1">Anunciado por: <strong>{anuncio.anunciante}</strong> · Data: {anuncio.data}</p>
-                                </div>
-                                <span className="text-sm font-black text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-xl border border-emerald-200 shrink-0">
-                                  {anuncio.preco}
-                                </span>
-                              </div>
-
-                              <p className="text-xs text-slate-600 leading-relaxed bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                {anuncio.descricao}
-                              </p>
-
-                              <div className="flex flex-wrap justify-between items-center pt-2 border-t border-slate-100 gap-3">
-                                <span className="text-xs font-bold text-slate-700">📞 Contato / WhatsApp: {anuncio.contato}</span>
-
-                                <div className="flex items-center gap-2">
-                                  <button 
-                                    onClick={() => abrirModalInformativoChat(anuncio)}
-                                    className="px-3.5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition cursor-pointer flex items-center gap-1.5 shadow-2xs"
-                                  >
-                                    💬 Conversar via Chat
-                                  </button>
-
-                                  {(perfilLogado === 'sindico' || anuncio.anunciante.includes('402') || anuncio.anunciante.includes(dadosMoradorLogado.apto)) && (
-                                    <button 
-                                      onClick={() => removerAnuncioMercado(anuncio.id)}
-                                      className="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition cursor-pointer"
-                                    >
-                                      🗑️ Excluir
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div className="bg-white rounded-3xl border border-slate-200/80 shadow-sm overflow-hidden max-w-3xl flex flex-col h-[550px]">
-                    <div className="p-4 bg-[#0B192C] text-white flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <button 
-                          onClick={() => setChatAtivoNoMercado(false)}
-                          className="bg-slate-800 hover:bg-slate-700 text-amber-400 font-bold px-3 py-1.5 rounded-xl text-xs cursor-pointer transition border border-slate-700"
-                        >
-                          ← Voltar aos Anúncios
-                        </button>
-                        <div>
-                          <h3 className="font-bold text-sm">Chat sobre: {anuncioOuVagaSelecionadaParaChat?.titulo || `Vaga ${anuncioOuVagaSelecionadaParaChat?.vaga}`}</h3>
-                          <p className="text-[11px] text-amber-400">Conversando com: {destinatarioChat}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex-1 p-6 overflow-y-auto space-y-4 bg-slate-50/50">
-                      {mensagensChat.length === 0 ? (
-                        <p className="text-xs text-slate-400 text-center py-4">Nenhuma mensagem trocada ainda.</p>
-                      ) : (
-                        mensagensChat.map(msg => {
-                          const souEu = msg.remetente.includes(perfilLogado === 'sindico' ? 'Síndico' : dadosMoradorLogado.nome);
-
-                          return (
-                            <div key={msg.id} className={`flex flex-col ${souEu ? 'items-end' : 'items-start'}`}>
-                              <div className="flex items-center gap-2 mb-1">
-                                <span className="text-[11px] font-bold text-slate-600">{msg.remetente}</span>
-                                <span className="text-[10px] text-slate-400">→ Para: {msg.destinatario}</span>
-                              </div>
-                              <div className={`max-w-md p-4 rounded-2xl text-xs leading-relaxed shadow-xs ${
-                                souEu 
-                                  ? 'bg-amber-500 text-slate-900 rounded-tr-xs font-medium' 
-                                  : 'bg-white text-slate-800 border border-slate-200 rounded-tl-xs'
-                              }`}>
-                                <p>{msg.texto}</p>
-                                <span className={`block text-[10px] mt-1.5 text-right ${souEu ? 'text-slate-800/70' : 'text-slate-400'}`}>
-                                  {msg.data}
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        })
-                      )}
-                    </div>
-
-                    <form onSubmit={enviarMensagemChat} className="p-4 bg-white border-t border-slate-200 flex gap-3 items-center">
-                      <input 
-                        type="text" 
-                        placeholder="Digite sua mensagem para o vizinho..." 
-                        value={textoMensagemChat}
-                        onChange={(e) => setTextoMensagemChat(e.target.value)}
-                        className="flex-1 bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-medium text-slate-800"
-                      />
-                      <button 
-                        type="submit"
-                        className="bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold px-6 py-3 rounded-xl transition cursor-pointer text-xs shadow-md shrink-0"
-                      >
-                        Enviar ✈️
-                      </button>
-                    </form>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* ABA: FALE COM O SÍNDICO */}
-            {abaAtiva === 'fale_sindico' && (
-              <div className="p-8 space-y-6">
-                <div>
-                  <h2 className="text-2xl font-black text-slate-900 tracking-tight">Fale com o Síndico</h2>
-                  <p className="text-sm text-slate-500 mt-0.5">
-                    {perfilLogado === 'sindico' 
-                      ? 'Painel de gerenciamento do canal de comunicação direto com os moradores.' 
-                      : 'Entre em contato direto com a administração do condomínio.'}
-                  </p>
-                </div>
-
-                {perfilLogado === 'sindico' ? (
-                  <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-6 max-w-2xl">
-                    <h3 className="font-bold text-slate-900 text-base">Gerenciar Autorização de Contato</h3>
-                    
-                    <div className="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h4 className="text-xs font-bold text-slate-900 uppercase">Autoriza o morador entrar em contato?</h4>
-                          <p className="text-xs text-slate-500 mt-0.5">Se marcar "Sim", o botão <strong>"Fale com o síndico ou deixe um recado"</strong> fica ativo para os moradores.</p>
-                        </div>
-                        <div className="flex gap-2">
-                          <button 
-                            type="button"
-                            onClick={() => setAutorizaContatoSindico(true)}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
-                              autorizaContatoSindico 
-                                ? 'bg-emerald-600 text-white shadow-md' 
-                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                            }`}
-                          >
-                            Sim
-                          </button>
-                          <button 
-                            type="button"
-                            onClick={() => setAutorizaContatoSindico(false)}
-                            className={`px-4 py-2 rounded-xl text-xs font-bold transition cursor-pointer ${
-                              !autorizaContatoSindico 
-                                ? 'bg-rose-600 text-white shadow-md' 
-                                : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-                            }`}
-                          >
-                            Não
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="pt-3 border-t border-slate-200 text-xs text-slate-600">
-                        Status atual para os moradores: <strong className={autorizaContatoSindico ? 'text-emerald-700' : 'text-rose-700'}>{autorizaContatoSindico ? 'Habilitado (Sim)' : 'Desabilitado (Não - aba oculta)'}</strong>
-                      </div>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="bg-white p-8 rounded-3xl border border-slate-200/80 shadow-sm space-y-6 max-w-xl text-center">
-                    <div className="w-16 h-16 bg-amber-500/20 border border-amber-500/30 rounded-2xl mx-auto flex items-center justify-center text-2xl">
-                      📞
-                    </div>
-                    <div className="space-y-2">
-                      <h3 className="font-bold text-slate-900 text-lg">Precisa falar com a administração?</h3>
-                      <p className="text-xs text-slate-500 leading-relaxed">
-                        O síndico autorizou o canal de comunicação aberto. Clique no botão abaixo para enviar uma mensagem ou deixar um recado diretamente via WhatsApp.
-                      </p>
-                    </div>
-
-                    <button 
-                      onClick={falarComSindico}
-                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold p-4 rounded-2xl transition cursor-pointer text-sm shadow-md flex items-center justify-center gap-2"
-                    >
-                      <span>💬 Fale com o síndico ou deixe um recado</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* ABA: AJUDA & MANUAIS */}
-            {abaAtiva === 'ajuda' && (
-              <div className="p-8 space-y-6">
-                <div>
-                  <h2 className="text-2xl font-black text-slate-900 tracking-tight">Ajuda & Manuais Oficiais</h2>
-                  <p className="text-sm text-slate-500 mt-0.5">Faça o download das normativas, diretrizes legais e regras de boa convivência do condomínio.</p>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl">
-                  {/* CARD 1: LEI DO CONDOMÍNIO */}
-                  <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-4">
-                    <div className="w-12 h-12 bg-blue-50 border border-blue-200 rounded-2xl flex items-center justify-center text-blue-700 font-black text-xl">
-                      📜
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-slate-900 text-base">Lei do Condomínio em PDF</h3>
-                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                        Manual contendo os direitos, deveres, disposições sobre inadimplência e a legislação vigente (Lei 4.591/64 e Código Civil).
-                      </p>
-                    </div>
-                    <button 
-                      onClick={baixarLeiCondominioPDF}
-                      className="w-full bg-[#0B192C] hover:bg-slate-800 text-white font-bold py-3 px-4 rounded-xl text-xs transition cursor-pointer shadow-md flex items-center justify-center gap-2"
-                    >
-                      <span>📥 Baixar Lei do Condomínio (PDF)</span>
-                    </button>
-                  </div>
-
-                  {/* CARD 2: REGRAS DE BOA CONVIVÊNCIA */}
-                  <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-4">
-                    <div className="w-12 h-12 bg-emerald-50 border border-emerald-200 rounded-2xl flex items-center justify-center text-emerald-700 font-black text-xl">
-                      🤝
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-slate-900 text-base">Regras de Boa Convivência em PDF</h3>
-                      <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                        Guia prático com horários de silêncio, normas de uso dos espaços comuns, regras de mudanças e garagens.
-                      </p>
-                    </div>
-                    <button 
-                      onClick={baixarRegrasConvivenciaPDF}
-                      className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-4 rounded-xl text-xs transition cursor-pointer shadow-md flex items-center justify-center gap-2"
-                    >
-                      <span>📥 Baixar Regras de Convivência (PDF)</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ABA: RECIBOS (SÍNDICO) */}
-            {abaAtiva === 'recibos' && perfilLogado === 'sindico' && (
-              <div className="p-8 space-y-6">
-                <div>
-                  <h2 className="text-2xl font-black text-slate-900 tracking-tight">Emissão Oficial de Recibo Condominial</h2>
-                  <p className="text-sm text-slate-500 mt-0.5">Gere e baixe recibos em PDF oficiais para obras, serviços de limpeza, pedreiro e muito mais.</p>
-                </div>
-
-                <div className="bg-white p-6 rounded-3xl border border-slate-200/80 shadow-sm space-y-4 max-w-2xl">
-                  <h3 className="font-bold text-slate-900 text-base">Emitir Recibo para Qualquer Serviço ou Despesa</h3>
-                  
-                  <form onSubmit={emitirReciboAvulsoSindico} className="space-y-4">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-600 mb-1">Selecione o Tipo de Recibo (Obra, Serviço, Pedreiro, etc):</label>
-                      <select 
-                        value={formEmissaoRecibo.categoriaSelecionada}
-                        onChange={(e) => setFormEmissaoRecibo({...formEmissaoRecibo, categoriaSelecionada: e.target.value})}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-bold text-slate-800 cursor-pointer"
-                      >
-                        {categoriasReciboPredefinidas.map((cat, idx) => (
-                          <option key={idx} value={cat}>{cat}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    {formEmissaoRecibo.categoriaSelecionada === 'Outro serviço / Pagamento avulso' && (
-                      <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1">Digite a Descrição Personalizada:</label>
-                        <input 
-                          type="text" 
-                          placeholder="Ex: Instalação de câmeras de segurança" 
-                          value={formEmissaoRecibo.tituloCustomizado}
-                          onChange={(e) => setFormEmissaoRecibo({...formEmissaoRecibo, tituloCustomizado: e.target.value})}
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-medium text-slate-800"
-                          required 
-                        />
-                      </div>
-                    )}
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1">Valor (Ex: R$ 1.200,00):</label>
-                        <input 
-                          type="text" 
-                          value={formEmissaoRecibo.valor}
-                          onChange={(e) => setFormEmissaoRecibo({...formEmissaoRecibo, valor: e.target.value})}
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-medium text-slate-800"
-                          required 
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-xs font-bold text-slate-600 mb-1">Data do Pagamento / Emissão:</label>
-                        <input 
-                          type="text" 
-                          value={formEmissaoRecibo.dataPagamento}
-                          onChange={(e) => setFormEmissaoRecibo({...formEmissaoRecibo, dataPagamento: e.target.value})}
-                          className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs font-medium text-slate-800"
-                          required 
-                        />
-                      </div>
-                    </div>
-
-                    <button 
-                      type="submit"
-                      className="w-full bg-emerald-700 hover:bg-emerald-800 text-white font-bold p-3.5 rounded-xl transition cursor-pointer text-xs shadow-md flex items-center justify-center gap-2"
-                    >
-                      <span>🖨️ Gerar e Baixar Recibo Oficial em PDF</span>
-                    </button>
-                  </form>
-                </div>
-              </div>
-            )}
-
-          </main>
-
-          {/* MODAL DE PRÉ-PREENCHIMENTO DO CORRETOR (WHATSAPP) */}
-          {modalCorretorAberto && (
-            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-              <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl overflow-hidden flex flex-col p-6 space-y-4 animate-in fade-in zoom-in duration-200 max-h-[90vh] overflow-y-auto">
-                
-                <div className="flex items-center gap-3 border-b border-slate-100 pb-3">
-                  <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-600 font-black text-lg shrink-0">
-                    🏠
-                  </div>
-                  <div>
-                    <h3 className="font-black text-slate-900 text-sm">Fale com o Especialista Imobiliário para venda ou locação do seu imóvel</h3>
-                    <p className="text-[11px] text-slate-500">Preencha os dados abaixo para enviar direto para o WhatsApp do Especialista Imobiliário.</p>
-                  </div>
-                </div>
-
-                <form onSubmit={enviarDadosCorretorWhatsApp} className="space-y-3">
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Nome do proprietario:</label>
-                    <input 
-                      type="text" 
-                      placeholder="Nome do proprietário"
-                      value={formCorretor.nomeProprietario}
-                      onChange={(e) => setFormCorretor({...formCorretor, nomeProprietario: e.target.value})}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-medium text-slate-800"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1">Endereço do imóvel (Rua e número):</label>
-                    <input 
-                      type="text" 
-                      placeholder="Rua Cachambi 1000"
-                      value={formCorretor.enderecoImovel}
-                      onChange={(e) => setFormCorretor({...formCorretor, enderecoImovel: e.target.value})}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-medium text-slate-800"
-                      required
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">Bairro:</label>
-                      <input 
-                        type="text" 
-                        placeholder="Bairro"
-                        value={formCorretor.bairroImovel}
-                        onChange={(e) => setFormCorretor({...formCorretor, bairroImovel: e.target.value})}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-medium text-slate-800"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">Ponto de referência:</label>
-                      <input 
-                        type="text" 
-                        placeholder="Ponto de referência"
-                        value={formCorretor.pontoReferencia}
-                        onChange={(e) => setFormCorretor({...formCorretor, pontoReferencia: e.target.value})}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-medium text-slate-800"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">Modalidade:</label>
-                      <select 
-                        value={formCorretor.modalidade}
-                        onChange={(e) => setFormCorretor({...formCorretor, modalidade: e.target.value})}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-medium text-slate-800 cursor-pointer"
-                      >
-                        <option value="Venda">Venda</option>
-                        <option value="Locação">Locação</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">Valor R$ Venda / Aluguel:</label>
-                      <input 
-                        type="text" 
-                        placeholder="Valor R$ Venda / Aluguel"
-                        value={formCorretor.valorPretendido}
-                        onChange={(e) => setFormCorretor({...formCorretor, valorPretendido: e.target.value})}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-medium text-slate-800"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">Metragem aproximada:</label>
-                      <input 
-                        type="text" 
-                        placeholder="Ex: 75 m²"
-                        value={formCorretor.metragem}
-                        onChange={(e) => setFormCorretor({...formCorretor, metragem: e.target.value})}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-medium text-slate-800"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-700 mb-1">Tel de contato:</label>
-                      <input 
-                        type="text" 
-                        placeholder="(21) 990214908"
-                        value={formCorretor.telContato}
-                        onChange={(e) => setFormCorretor({...formCorretor, telContato: e.target.value})}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs font-medium text-slate-800"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex gap-2 pt-2">
-                    <button 
-                      type="submit"
-                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-xs cursor-pointer transition shadow-md flex items-center justify-center gap-2"
-                    >
-                      <span>💬 Enviar para o WhatsApp</span>
-                    </button>
-                    <button 
-                      type="button"
-                      onClick={() => setModalCorretorAberto(false)}
-                      className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-4 py-3 rounded-xl text-xs cursor-pointer transition"
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-                </form>
-
-              </div>
-            </div>
-          )}
-
-          {/* MODAL INFORMATIVO DE CONDUTA DO CHAT */}
-          {modalInformativoChatAberto && (
-            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-              <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden flex flex-col p-6 space-y-5 animate-in fade-in zoom-in duration-200">
-                
-                <div className="flex items-center gap-3 border-b border-slate-100 pb-4">
-                  <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-600 text-xl font-black shrink-0">
-                    🛡️
-                  </div>
-                  <div>
-                    <h3 className="font-black text-slate-900 text-base">Diretrizes de Boa Convivência no Chat</h3>
-                    <p className="text-xs text-slate-500">Leia atentamente antes de iniciar sua conversa com o vizinho.</p>
-                  </div>
-                </div>
-
-                <div className="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-4 space-y-3 text-xs text-amber-950 leading-relaxed">
-                  <p className="font-bold flex items-center gap-2">
-                    <span>✨ Olá, vizinho! O Condô Web preza por um ambiente seguro, harmonioso e respeitoso para todos.</span>
-                  </p>
-                  <ul className="space-y-2 pl-2 list-disc list-inside text-amber-900">
-                    <li><strong>Mantenha a Educação e o Respeito:</strong> Trate sempre o seu vizinho com cordialidade e empatia durante as negociações.</li>
-                    <li><strong>Zero Tolerância a Ofensas:</strong> É estritamente proibido o uso de palavras de baixo calão, xingamentos, ameaças ou qualquer forma de discriminação.</li>
-                    <li><strong>Foco na Negociação:</strong> Utilize este canal exclusivamente para tirar dúvidas, combinar valores ou acertar a locação da vaga ou itens do Mercado de Vizinhos.</li>
-                  </ul>
-                  <p className="text-[11px] text-amber-900/80 font-medium pt-1 border-t border-amber-200/50">
-                    Mensagens inadequadas poderão ser reportadas à administração e o acesso ao chat poderá ser revogado pelo síndico.
-                  </p>
-                </div>
-
-                {anuncioOuVagaSelecionadaParaChat && (
-                  <div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 text-xs text-slate-700">
-                    <p>Iniciando conversa sobre: <strong>{anuncioOuVagaSelecionadaParaChat.titulo || `Vaga ${anuncioOuVagaSelecionadaParaChat?.vaga}`}</strong></p>
-                    <p className="text-slate-500 text-[11px] mt-0.5">Proprietário / Anunciante: {destinatarioChat}</p>
-                  </div>
-                )}
-
-                <div className="flex gap-3 pt-2">
-                  <button 
-                    onClick={concordarEentrarNoChat}
-                    className="flex-1 bg-amber-500 hover:bg-amber-600 text-slate-900 font-bold py-3.5 rounded-xl text-xs cursor-pointer transition shadow-md flex items-center justify-center gap-2"
-                  >
-                    <span>✓ Li, Concordo & Entrar no Chat</span>
-                  </button>
-                  <button 
-                    onClick={() => setModalInformativoChatAberto(false)}
-                    className="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold px-5 py-3.5 rounded-xl text-xs cursor-pointer transition"
-                  >
-                    Cancelar
-                  </button>
-                </div>
-
-              </div>
-            </div>
-          )}
-
-          {/* MODAL DE RECIBO PDF */}
-          {reciboVisualizacao && (
-            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-              <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl overflow-hidden flex flex-col p-6 space-y-4">
-                
-                <div className="flex justify-between items-center border-b pb-3">
-                  <div>
-                    <h3 className="font-black text-slate-900 text-sm">RECIBO OFICIAL DE QUITAÇÃO</h3>
-                    <p className="text-[11px] text-slate-400">{nomeCondominioExibido || "Condomínio"}</p>
-                  </div>
-                  <span className="bg-emerald-100 text-emerald-800 text-xs font-black px-3 py-1 rounded-full">QUITADO ✓</span>
-                </div>
-
-                <div className="space-y-3 text-xs text-slate-700 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                  <p><strong>Referência:</strong> {reciboVisualizacao.titulo} (Unidade {reciboVisualizacao.unidade})</p>
-                  <p><strong>Valor Quitado:</strong> {reciboVisualizacao.valor} ({numeroParaExtenso(reciboVisualizacao.valor)})</p>
-                  <p><strong>Vencimento:</strong> {reciboVisualizacao.vencimento}</p>
-                  <p><strong>Data do Pagamento:</strong> {reciboVisualizacao.dataPagamentoMorador || 'N/A'}</p>
-                  <p><strong>Confirmação do Síndico:</strong> {reciboVisualizacao.dataConfirmacaoSindico || 'N/A'}</p>
-                  
-                  <div className="pt-6 text-center border-t border-slate-200">
-                    <p className="font-bold text-slate-900">Especialista Imobiliário</p>
-                    <p className="text-[10px] text-slate-400">Síndico Responsável - Condô Web</p>
-                  </div>
-                </div>
-
-                <div className="flex gap-3 pt-2">
-                  <button 
-                    onClick={() => baixarReciboPDF(reciboVisualizacao)}
-                    className="flex-1 bg-emerald-700 hover:bg-emerald-800 text-white font-bold py-3 rounded-xl text-xs cursor-pointer transition shadow-sm flex items-center justify-center gap-2"
-                  >
-                    <span>📥 Baixar Recibo em PDF Real</span>
-                  </button>
-                  <button 
-                    onClick={() => setReciboVisualizacao(null)}
-                    className="bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold px-4 py-3 rounded-xl text-xs cursor-pointer transition"
-                  >
-                    Fechar
-                  </button>
-                </div>
-
-              </div>
-            </div>
-          )}
-
-        </div>
-      );
-    }
-
-    ReactDOM.render(<App />, document.getElementById('root'));
-  </script>
-</body>
-</html>
+                                Anunciado por: <strong>{vagaDisp.morador} (Apto {vagaDisp.apto})</strong> · Valor: <strong className="text-emerald-700">{vagaDisp.precoLocacao
